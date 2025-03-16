@@ -137,11 +137,10 @@ async function saveToFirestore() {
 
     await setDoc(fsDocRef, { transactions: sanitizedTransactions });
     showToast('Saved to Cloud successfully.');
-    // Use helper function instead of direct assignment
     setUnsavedChanges(false);
   } catch (err) {
-    console.error(err);
-    showToast('Error saving to Cloud.');
+    console.error("Firestore error:", err);
+    showToast(`Error saving to Cloud: ${err.code} - ${err.message}`);
   }
 }
 

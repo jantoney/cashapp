@@ -37,7 +37,7 @@ function updateUnsavedBanner() {
   const banner = document.getElementById('unsavedBanner');
   if (banner) {
     banner.style.display = unsavedChanges ? 'block' : 'none';
-    console.log("Banner update called, unsaved changes:", unsavedChanges); // Add debug log
+    //console.log("Banner update called, unsaved changes:", unsavedChanges); // Add debug log
   } else {
     console.warn("Unsaved banner element not found");
   }
