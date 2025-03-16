@@ -55,7 +55,19 @@ function clearTransactions() {
 }
 
 function addTransaction(tx) {
-  transactions.push(tx);
+  // Ensure all required fields are present
+  const sanitizedTx = {
+    description: tx.description || '',
+    date: tx.date || '',
+    amount: tx.amount || 0,
+    recurring: tx.recurring === true,
+    period: tx.recurring ? (tx.period || null) : null,
+    hidden: tx.hidden === true,
+    // Only include endDate if it has a value
+    ...(tx.endDate && tx.endDate.trim() !== '' ? { endDate: tx.endDate } : { endDate: null })
+  };
+  
+  transactions.push(sanitizedTx);
 }
 
 function setUnsavedChanges(value) {

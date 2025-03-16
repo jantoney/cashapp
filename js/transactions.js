@@ -119,7 +119,23 @@ function loadFromFirestore() {
 // Save to Firestore
 async function saveToFirestore() {
   try {
-    await setDoc(fsDocRef, { transactions: transactions });
+    // Sanitize transactions data to remove any undefined values
+    const sanitizedTransactions = transactions.map(tx => {
+      // Create a new object with all properties from the transaction
+      const sanitized = {};
+      Object.keys(tx).forEach(key => {
+        // Only include properties with defined values
+        if (tx[key] !== undefined) {
+          sanitized[key] = tx[key];
+        } else {
+          // Replace undefined with null or empty string as appropriate
+          sanitized[key] = key === 'endDate' || key === 'period' ? null : '';
+        }
+      });
+      return sanitized;
+    });
+
+    await setDoc(fsDocRef, { transactions: sanitizedTransactions });
     showToast('Saved to Cloud successfully.');
     // Use helper function instead of direct assignment
     setUnsavedChanges(false);
