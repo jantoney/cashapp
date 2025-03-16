@@ -1,5 +1,19 @@
 import { transactions, formatCurrency } from './utils.js';
 
+// Function to format numbers in a more readable form (k, M, etc.)
+function formatYAxisLabel(value) {
+  if (value === 0) return '$0';
+  
+  const absValue = Math.abs(value);
+  if (absValue >= 1000000) {
+    return (value / 1000000).toFixed(1) + 'M';
+  } else if (absValue >= 1000) {
+    return (value / 1000).toFixed(1) + 'k';
+  }
+  
+  return value.toString();
+}
+
 // Draw or update the cashflow graph
 let chart = null;
 function drawGraph() {
@@ -93,7 +107,12 @@ function drawGraph() {
     },
     options: {
       scales: {
-        x: { type: 'time', time: { unit: 'day' } }
+        x: { type: 'time', time: { unit: 'day' } },
+        y: { 
+          ticks: {
+            callback: formatYAxisLabel
+          }
+        }
       },
       plugins: {
         annotation: {

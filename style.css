@@ -513,6 +513,171 @@ tr:hover {
   }
 }
 
+/* Enhanced mobile responsive styles */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .main-content {
+    padding: 12px;
+    margin-left: 0;
+  }
+  
+  .card {
+    margin-bottom: 15px;
+  }
+  
+  .card-header {
+    padding: 10px 15px;
+  }
+  
+  .card-body {
+    padding: 12px;
+  }
+  
+  .toggle-group {
+    flex-direction: column;
+  }
+  
+  .toggle-button:not(:last-child) {
+    border-right: 1px solid var(--gray-light);
+    border-bottom: none;
+  }
+  
+  .form-control {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .toggle-button {
+    padding: 6px 10px;
+  }
+
+  /* Make graph container smaller */
+  .chart-container {
+    height: 40vh;
+    min-height: 200px;
+  }
+  
+  /* Reset flex layout for better stacking */
+  .graph-and-table-container {
+    flex-direction: column;
+  }
+  
+  .chart-container,
+  .monthly-balance-container {
+    width: 100%;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .mb-10 {
+    margin-bottom: 8px;
+  }
+
+  .mb-20 {
+    margin-bottom: 15px;
+  }
+
+  .mt-20 {
+    margin-top: 15px;
+  }
+}
+
+/* Small phone screens */
+@media (max-width: 480px) {
+  body {
+    font-size: 13px;
+  }
+
+  .main-content {
+    padding: 10px;
+  }
+  
+  .card-header {
+    padding: 8px 12px;
+  }
+  
+  .card-body {
+    padding: 10px;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    margin-right: 3px;
+    margin-bottom: 3px;
+  }
+  
+  .d-flex {
+    flex-wrap: wrap;
+  }
+
+  /* Stack buttons on very small screens */
+  .d-flex .btn {
+    margin-bottom: 5px;
+  }
+  
+  /* Adjust table for small screens */
+  table {
+    font-size: 12px;
+  }
+  
+  th, td {
+    padding: 6px 8px;
+  }
+  
+  /* Make presets more compact */
+  #presetTimeframes {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  
+  .preset-button {
+    padding: 4px 8px;
+    font-size: 11px;
+    margin-right: 3px;
+    margin-bottom: 3px;
+  }
+  
+  /* Adjust login container */
+  #loginContainer {
+    margin: 40px 15px;
+    padding: 20px 15px;
+  }
+
+  /* Better handling of date inputs on small screens */
+  input[type="date"].form-control {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  /* Make graph even smaller */
+  .chart-container {
+    height: 35vh;
+    min-height: 180px;
+  }
+
+  /* Improve form layout */
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-label {
+    margin-bottom: 3px;
+    font-size: 13px;
+  }
+}
+
 /* Graph and table container */
 .graph-and-table-container {
   display: flex;
