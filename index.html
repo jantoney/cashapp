@@ -1,1 +1,248 @@
-hello
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- VERSION: v1 - REMINDER: Increment the version number on each update -->
+  <title>Cashflow Forecast App v1.1</title>
+  <!-- Include Chart.js, date adapter, and annotation plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0"></script>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Fixed unsaved changes banner -->
+  <div id="unsavedBanner">You have unsaved changes</div>
+  
+  <!-- Toast container for notifications -->
+  <div id="toastContainer"></div>
+  
+  <!-- Login Container -->
+  <div id="loginContainer">
+    <h2>Cashflow Forecast</h2>
+    <div class="form-group">
+      <input type="email" id="email" placeholder="Email" class="form-control">
+    </div>
+    <div class="form-group">
+      <input type="password" id="password" placeholder="Password" class="form-control">
+    </div>
+    <div class="d-flex justify-content-between mb-20">
+      <button id="loginBtn" class="btn btn-primary">Login</button>
+      <button id="signupBtn" class="btn btn-light">Sign Up</button>
+    </div>
+    <button id="googleSignInBtn">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google logo">
+      Sign in with Google
+    </button>
+  </div>
+
+  <!-- App Container (hidden until login) -->
+  <div id="appContainer">
+    
+    <!-- File operations -->
+    <div class="card mb-20">
+      <div class="card-header">
+        <h1>Cashflow Forecast App v1</h1>
+      <div>
+        <button id="signOutBtn" class="btn btn-light"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+      </div>
+      <div class="card-body">
+        <div class="d-flex">
+          <button id="openFile" class="btn btn-light"><i class="fas fa-folder-open"></i> Open Local Data</button>
+          <button id="saveFile" class="btn btn-light"><i class="fas fa-save"></i> Save Local Data</button>
+          <button id="loadFirestore" class="btn btn-primary"><i class="fas fa-cloud-download-alt"></i> Load from Cloud</button>
+          <button id="saveFirestore" class="btn btn-primary"><i class="fas fa-cloud-upload-alt"></i> Save to Cloud</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Section for adding transactions -->
+    <div class="card">
+      <div class="card-header">Add Transaction</div>
+      <div class="card-body">
+        <div class="tab-container">
+          <div class="tab-nav">
+            <div class="tab-link active" data-tab="recurring-tab">Recurring Transaction</div>
+            <div class="tab-link" data-tab="oneoff-tab">One-off Transaction</div>
+          </div>
+          <div class="tab-content">
+            <div class="tab-pane active" id="recurring-tab">
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" id="recurringDesc" class="form-control" placeholder="e.g. Rent">
+              </div>
+              <div class="d-flex">
+                <div class="form-group" style="flex: 1; margin-right: 10px;">
+                  <label class="form-label">Start Date</label>
+                  <input type="date" id="recurringStartDate" class="form-control date-picker">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">End Date (Optional)</label>
+                  <input type="date" id="recurringEndDate" class="form-control date-picker">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Period</label>
+                <select id="recurringPeriod" class="form-control">
+                  <option value="weekly">Weekly</option>
+                  <option value="fortnightly">Fortnightly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Amount</label>
+                <div class="input-group">
+                  <input type="number" id="recurringAmount" class="form-control" placeholder="0.00">
+                  <div class="input-group-append">
+                    <span class="input-group-text">AUD</span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <div class="toggle-group">
+                  <button type="button" id="recurringTypeIn" class="toggle-button active">Money In</button>
+                  <button type="button" id="recurringTypeOut" class="toggle-button">Money Out</button>
+                </div>
+              </div>
+              <button id="addRecurring" class="btn btn-success"><i class="fas fa-plus"></i> Add Recurring Transaction</button>
+            </div>
+            <div class="tab-pane" id="oneoff-tab">
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" id="oneoffDesc" class="form-control" placeholder="e.g. Freelance">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date</label>
+                <input type="date" id="oneoffDate" class="form-control date-picker">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Amount</label>
+                <div class="input-group">
+                  <input type="number" id="oneoffAmount" class="form-control" placeholder="0.00">
+                  <div class="input-group-append">
+                    <span class="input-group-text">AUD</span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <div class="toggle-group">
+                  <button type="button" id="oneoffTypeIn" class="toggle-button active">Money In</button>
+                  <button type="button" id="oneoffTypeOut" class="toggle-button">Money Out</button>
+                </div>
+              </div>
+              <button id="addOneoff" class="btn btn-success"><i class="fas fa-plus"></i> Add One-off Transaction</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graph and time range selection -->
+    <div class="card mt-20">
+      <div class="card-header">
+        <span>Cashflow Graph</span>
+        <button id="copyGraph" class="btn btn-light btn-sm"><i class="fas fa-copy"></i> Copy Graph</button>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-10">
+          <div>
+            <label class="form-label" style="display:inline">Start Date: </label>
+            <input type="date" id="graphStartDate" class="form-control date-picker" style="width: auto; display: inline-block;">
+            <label class="form-label" style="display:inline; margin-left: 10px;">End Date: </label>
+            <input type="date" id="graphEndDate" class="form-control date-picker" style="width: auto; display: inline-block;">
+            <button id="updateGraph" class="btn btn-primary btn-sm" style="margin-left: 10px;"><i class="fas fa-sync"></i> Update</button>
+          </div>
+          <div id="presetTimeframes">
+            <span>Presets: </span>
+            <button type="button" class="btn btn-light btn-sm preset-button" data-months="1">1M</button>
+            <button type="button" class="btn btn-light btn-sm preset-button" data-months="3">3M</button>
+            <button type="button" class="btn btn-light btn-sm preset-button" data-months="6">6M</button>
+            <button type="button" class="btn btn-light btn-sm preset-button" data-months="12">1Y</button>
+          </div>
+        </div>
+        <div class="graph-and-table-container">
+          <div class="chart-container">
+            <canvas id="cashflowChart"></canvas>
+          </div>
+          <div class="monthly-balance-container">
+            <h4>Monthly Balance</h4>
+            <table id="monthlyBalanceTable" class="balance-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions table -->
+    <div class="card mt-20">
+      <div class="card-header">Transactions</div>
+      <div class="card-body">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Date</th>
+                <th class="amount-cell">Amount</th>
+                <th>Recurring</th>
+                <th>Period</th>
+                <th>Hide</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transactionTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add a small JavaScript file for the new UI interactions -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Tab functionality
+      document.querySelectorAll('.tab-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+          const target = this.getAttribute('data-tab');
+          
+          // Remove active class from all tabs and panes
+          document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+          
+          // Add active class to current tab and pane
+          this.classList.add('active');
+          document.getElementById(target).classList.add('active');
+        });
+      });
+      
+      // Date picker focus handling
+      document.querySelectorAll('.date-picker').forEach(datePicker => {
+        datePicker.addEventListener('click', function() {
+          this.showPicker();
+        });
+      });
+    });
+  </script>
+
+  <!-- Main app scripts -->
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/utils.js"></script>
+  <script type="module" src="js/chart.js"></script>
+  <script type="module" src="js/transactions.js"></script>
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
