@@ -2,8 +2,151 @@ import { transactions, showToast, formatCurrency, markUnsavedChanges, unsavedCha
 import { fsDocRef, setDoc } from './firebase-config.js';
 import { drawGraph } from './chart.js';
 
+// Create transaction edit modal in DOM
+function createEditModal() {
+  // Check if modal already exists to avoid duplicates
+  if (document.getElementById('editTransactionModal')) return;
+  
+  const modalHtml = `
+    <div id="editTransactionModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>Edit Transaction</h4>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form id="editTransactionForm">
+            <input type="hidden" id="editTransactionIndex">
+            
+            <div class="form-group">
+              <label for="editDescription">Description</label>
+              <input type="text" id="editDescription" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="editDate">Date</label>
+              <input type="date" id="editDate" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="editAmount">Amount</label>
+              <input type="number" id="editAmount" class="form-control" step="0.01" min="0" required>
+            </div>
+            
+            <div class="form-group">
+              <label>Transaction Type</label>
+              <div class="toggle-group">
+                <button type="button" id="editTypeIn" class="toggle-btn">Money In</button>
+                <button type="button" id="editTypeOut" class="toggle-btn">Money Out</button>
+              </div>
+            </div>
+            
+            <div id="editRecurringFields">
+              <div class="form-group">
+                <label for="editPeriod">Recurrence</label>
+                <select id="editPeriod" class="form-control">
+                  <option value="weekly">Weekly</option>
+                  <option value="fortnightly">Fortnightly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="editEndDate">End Date (optional)</label>
+                <input type="date" id="editEndDate" class="form-control">
+              </div>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" id="saveEditTransaction" class="btn btn-primary">Save Changes</button>
+              <button type="button" id="cancelEditTransaction" class="btn btn-secondary">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const modalContainer = document.createElement('div');
+  modalContainer.innerHTML = modalHtml;
+  document.body.appendChild(modalContainer.firstElementChild);
+  
+  // Set up event listeners
+  document.querySelector('.close-modal').addEventListener('click', closeEditModal);
+  document.getElementById('cancelEditTransaction').addEventListener('click', closeEditModal);
+  document.getElementById('saveEditTransaction').addEventListener('click', saveEditTransaction);
+  
+  // Event listeners for toggle buttons
+  document.getElementById('editTypeIn').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('editTypeOut').classList.remove('active');
+  });
+
+  document.getElementById('editTypeOut').addEventListener('click', function() {
+    this.classList.add('active');
+    document.getElementById('editTypeIn').classList.remove('active');
+  });
+}
+
+// Close the modal
+function closeEditModal() {
+  const modal = document.getElementById('editTransactionModal');
+  modal.style.display = 'none';
+}
+
+// Save the edited transaction
+function saveEditTransaction() {
+  const index = parseInt(document.getElementById('editTransactionIndex').value);
+  const tx = transactions[index];
+  const description = document.getElementById('editDescription').value;
+  const date = document.getElementById('editDate').value;
+  const amount = parseFloat(document.getElementById('editAmount').value);
+  
+  if (!description || !date || isNaN(amount)) {
+    showToast('Please fill in all required fields correctly.');
+    return;
+  }
+  
+  // Determine if money in or out
+  const isMoneyIn = document.getElementById('editTypeIn').classList.contains('active');
+  const finalAmount = isMoneyIn ? Math.abs(amount) : -Math.abs(amount);
+  
+  // Update transaction
+  if (tx.recurring) {
+    const period = document.getElementById('editPeriod').value;
+    const endDate = document.getElementById('editEndDate').value;
+    
+    transactions[index] = { 
+      description: description, 
+      date: date, 
+      endDate: endDate || null, 
+      amount: finalAmount, 
+      recurring: true, 
+      period: period, 
+      hidden: tx.hidden 
+    };
+  } else {
+    transactions[index] = { 
+      description: description, 
+      date: date, 
+      amount: finalAmount, 
+      recurring: false, 
+      period: null, 
+      hidden: tx.hidden 
+    };
+  }
+  
+  updateTransactionsTable();
+  markUnsavedChanges();
+  closeEditModal();
+  showToast('Transaction updated successfully.');
+}
+
 // Update transactions table
 function updateTransactionsTable() {
+  // Ensure the edit modal exists in the DOM
+  createEditModal();
+  
   transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
   const tbody = document.getElementById('transactionTableBody');
   tbody.innerHTML = '';
@@ -44,45 +187,38 @@ function updateTransactionsTable() {
   drawGraph();
 }
 
-// Edit a transaction
+// Edit a transaction - updated to use modal
 function editTransaction(index) {
   const tx = transactions[index];
-  const newDescription = prompt("Edit description:", tx.description);
-  if (newDescription === null) return;
-  const newDate = prompt("Edit date (YYYY-MM-DD):", tx.date);
-  if (newDate === null) return;
-  const newAmount = prompt("Edit amount:", Math.abs(tx.amount));
-  if (newAmount === null) return;
-  let newAmountNum = parseFloat(newAmount);
-  if (isNaN(newAmountNum)) { showToast("Invalid amount."); return; }
-  const newType = prompt("Enter type ('in' for Money In, 'out' for Money Out):", (tx.amount < 0) ? "out" : "in");
-  if (newType === null || (newType !== "in" && newType !== "out")) { showToast("Invalid type."); return; }
-  newAmountNum = (newType === "out") ? -Math.abs(newAmountNum) : Math.abs(newAmountNum);
-  if (tx.recurring) {
-    const newPeriod = prompt("Edit period (weekly, fortnightly, monthly):", tx.period);
-    if (newPeriod === null) return;
-    const newEndDate = prompt("Edit end date (YYYY-MM-DD, leave empty if none):", tx.endDate || "");
-    transactions[index] = { 
-      description: newDescription, 
-      date: newDate, 
-      endDate: newEndDate, 
-      amount: newAmountNum, 
-      recurring: true, 
-      period: newPeriod, 
-      hidden: tx.hidden 
-    };
+  const modal = document.getElementById('editTransactionModal');
+  
+  // Populate the form
+  document.getElementById('editTransactionIndex').value = index;
+  document.getElementById('editDescription').value = tx.description;
+  document.getElementById('editDate').value = tx.date;
+  document.getElementById('editAmount').value = Math.abs(tx.amount);
+  
+  // Set money in/out toggle
+  if (tx.amount >= 0) {
+    document.getElementById('editTypeIn').classList.add('active');
+    document.getElementById('editTypeOut').classList.remove('active');
   } else {
-    transactions[index] = { 
-      description: newDescription, 
-      date: newDate, 
-      amount: newAmountNum, 
-      recurring: false, 
-      period: null, 
-      hidden: tx.hidden 
-    };
+    document.getElementById('editTypeOut').classList.add('active');
+    document.getElementById('editTypeIn').classList.remove('active');
   }
-  updateTransactionsTable();
-  markUnsavedChanges();
+  
+  // Show/hide recurring fields based on transaction type
+  const recurringFields = document.getElementById('editRecurringFields');
+  if (tx.recurring) {
+    recurringFields.style.display = 'block';
+    document.getElementById('editPeriod').value = tx.period || 'monthly';
+    document.getElementById('editEndDate').value = tx.endDate || '';
+  } else {
+    recurringFields.style.display = 'none';
+  }
+  
+  // Show the modal
+  modal.style.display = 'block';
 }
 
 // Delete a transaction
