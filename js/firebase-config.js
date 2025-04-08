@@ -18,5 +18,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const fsDocRef = doc(db, "appData", "transactions"); // single document for transactions
+const fsCategoriesDocRef = doc(db, "appData", "categories"); // document for categories
 
-export { app, db, auth, fsDocRef, onSnapshot, setDoc, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup };
+export { app, db, auth, fsDocRef, fsCategoriesDocRef, onSnapshot, setDoc, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup };

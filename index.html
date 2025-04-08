@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- VERSION: v1 - REMINDER: Increment the version number on each update -->
-  <title>Cashflow Forecast App v1.5dd</title>
+  <title>Cashflow Forecast App v1.6dd</title>
   <!-- Include Chart.js, date adapter, and annotation plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -12,10 +12,14 @@
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <!-- Fixed unsaved changes banner -->
-  <div id="unsavedBanner">You have unsaved changes</div>
+  <div id="unsavedBanner">
+    <span>You have unsaved changes</span>
+    <button id="saveAllBtn" class="btn btn-light btn-sm"><i class="fas fa-save"></i> SAVE</button>
+  </div>
   
   <!-- Toast container for notifications -->
   <div id="toastContainer"></div>
@@ -57,7 +61,7 @@
     <!-- File operations -->
     <div class="card mb-20">
       <div class="card-header">
-        <h1>Cashflow Forecast App v1.5</h1>
+        <h1>Cashflow Forecast App v1.6</h1>
       <div>
         <button id="signOutBtn" class="btn btn-light"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
       </div>
@@ -68,87 +72,121 @@
           <button id="saveFile" class="btn btn-light"><i class="fas fa-save"></i> Save Local Data</button>
           <button id="loadFirestore" class="btn btn-primary"><i class="fas fa-cloud-download-alt"></i> Load from Cloud</button>
           <button id="saveFirestore" class="btn btn-primary"><i class="fas fa-cloud-upload-alt"></i> Save to Cloud</button>
+          <button id="rebaseBtn" class="btn btn-warning"><i class="fas fa-sync-alt"></i> Rebase</button>
+          <button id="manageCategoriesBtn" class="btn btn-info"><i class="fas fa-tags"></i> Manage Categories</button>
+          <button id="openAddTransactionModal" class="btn btn-success"><i class="fas fa-plus"></i> Add Transaction</button>
         </div>
       </div>
     </div>
     
-    <!-- Section for adding transactions -->
-    <div class="card">
-      <div class="card-header">Add Transaction</div>
-      <div class="card-body">
-        <div class="tab-container">
-          <div class="tab-nav">
-            <div class="tab-link active" data-tab="recurring-tab">Recurring Transaction</div>
-            <div class="tab-link" data-tab="oneoff-tab">One-off Transaction</div>
-          </div>
-          <div class="tab-content">
-            <div class="tab-pane active" id="recurring-tab">
-              <div class="form-group">
-                <label class="form-label">Description</label>
-                <input type="text" id="recurringDesc" class="form-control" placeholder="e.g. Rent">
+    <!-- Transaction Modal -->
+    <div id="addTransactionModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="transactionModalTitle">Add New Transaction</h3>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="tab-container">
+            <div class="tab-nav">
+              <div class="tab-link active" data-tab="recurring-tab">
+                <i class="fas fa-sync-alt"></i> Recurring Transaction
               </div>
-              <div class="d-flex">
-                <div class="form-group" style="flex: 1; margin-right: 10px;">
-                  <label class="form-label">Start Date</label>
-                  <input type="date" id="recurringStartDate" class="form-control date-picker">
-                </div>
-                <div class="form-group" style="flex: 1;">
-                  <label class="form-label">End Date (Optional)</label>
-                  <input type="date" id="recurringEndDate" class="form-control date-picker">
-                </div>
+              <div class="tab-link" data-tab="oneoff-tab">
+                <i class="fas fa-calendar-day"></i> One-off Transaction
               </div>
-              <div class="form-group">
-                <label class="form-label">Period</label>
-                <select id="recurringPeriod" class="form-control">
-                  <option value="weekly">Weekly</option>
-                  <option value="fortnightly">Fortnightly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Amount</label>
-                <div class="input-group">
-                  <input type="number" id="recurringAmount" class="form-control" placeholder="0.00">
-                  <div class="input-group-append">
-                    <span class="input-group-text">AUD</span>
-                  </div>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Type</label>
-                <div class="toggle-group">
-                  <button type="button" id="recurringTypeIn" class="toggle-button active">Money In</button>
-                  <button type="button" id="recurringTypeOut" class="toggle-button">Money Out</button>
-                </div>
-              </div>
-              <button id="addRecurring" class="btn btn-success"><i class="fas fa-plus"></i> Add Recurring Transaction</button>
             </div>
-            <div class="tab-pane" id="oneoff-tab">
-              <div class="form-group">
-                <label class="form-label">Description</label>
-                <input type="text" id="oneoffDesc" class="form-control" placeholder="e.g. Freelance">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Date</label>
-                <input type="date" id="oneoffDate" class="form-control date-picker">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Amount</label>
-                <div class="input-group">
-                  <input type="number" id="oneoffAmount" class="form-control" placeholder="0.00">
-                  <div class="input-group-append">
-                    <span class="input-group-text">AUD</span>
+            <div class="tab-content">
+              <div class="tab-pane active" id="recurring-tab">
+                <div class="transaction-type-indicator recurring">Recurring Transaction</div>
+                <div class="form-group">
+                  <label class="form-label">Description</label>
+                  <input type="text" id="recurringDesc" class="form-control" placeholder="e.g. Rent">
+                </div>
+                <div class="d-flex">
+                  <div class="form-group" style="flex: 1; margin-right: 10px;">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" id="recurringStartDate" class="form-control date-picker">
+                  </div>
+                  <div class="form-group" style="flex: 1;">
+                    <label class="form-label">End Date (Optional)</label>
+                    <input type="date" id="recurringEndDate" class="form-control date-picker">
                   </div>
                 </div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Type</label>
-                <div class="toggle-group">
-                  <button type="button" id="oneoffTypeIn" class="toggle-button active">Money In</button>
-                  <button type="button" id="oneoffTypeOut" class="toggle-button">Money Out</button>
+                <div class="form-group">
+                  <label class="form-label">Period</label>
+                  <select id="recurringPeriod" class="form-control">
+                    <option value="weekly">Weekly</option>
+                    <option value="fortnightly">Fortnightly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
                 </div>
+                <div class="form-group">
+                  <label class="form-label">Amount</label>
+                  <div class="input-group">
+                    <input type="number" id="recurringAmount" class="form-control" placeholder="0.00">
+                    <div class="input-group-append">
+                      <span class="input-group-text">AUD</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Type</label>
+                  <div class="toggle-group">
+                    <button type="button" id="recurringTypeIn" class="toggle-button active">Money In</button>
+                    <button type="button" id="recurringTypeOut" class="toggle-button">Money Out</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Category</label>
+                  <div class="d-flex align-items-center">
+                    <div id="recurringCategoryContainer" style="flex-grow: 1;"></div>
+                    <button type="button" id="manageRecurringCategories" class="btn btn-light btn-sm ml-10">
+                      <i class="fas fa-cog"></i> Manage
+                    </button>
+                  </div>
+                </div>
+                <button id="addRecurring" class="btn btn-success"><i class="fas fa-plus"></i> Add Recurring Transaction</button>
               </div>
-              <button id="addOneoff" class="btn btn-success"><i class="fas fa-plus"></i> Add One-off Transaction</button>
+              <div class="tab-pane" id="oneoff-tab">
+                <div class="transaction-type-indicator oneoff">One-off Transaction</div>
+                <div class="form-group">
+                  <label class="form-label">Description</label>
+                  <input type="text" id="oneoffDesc" class="form-control" placeholder="e.g. Freelance">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Date</label>
+                  <input type="date" id="oneoffDate" class="form-control date-picker">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Amount</label>
+                  <div class="input-group">
+                    <input type="number" id="oneoffAmount" class="form-control" placeholder="0.00">
+                    <div class="input-group-append">
+                      <span class="input-group-text">AUD</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Type</label>
+                  <div class="toggle-group">
+                    <button type="button" id="oneoffTypeIn" class="toggle-button active">Money In</button>
+                    <button type="button" id="oneoffTypeOut" class="toggle-button">Money Out</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Category</label>
+                  <div class="d-flex align-items-center">
+                    <div id="oneoffCategoryContainer" style="flex-grow: 1;"></div>
+                    <button type="button" id="manageOneoffCategories" class="btn btn-light btn-sm ml-10">
+                      <i class="fas fa-cog"></i> Manage
+                    </button>
+                  </div>
+                </div>
+                <button id="addOneoff" class="btn btn-success"><i class="fas fa-plus"></i> Add One-off Transaction</button>
+              </div>
             </div>
           </div>
         </div>
@@ -200,7 +238,19 @@
 
     <!-- Transactions table -->
     <div class="card mt-20">
-      <div class="card-header">Transactions</div>
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <span>Transactions</span>
+          <div>
+            <button id="toggleGroupCategoriesBtn" class="btn btn-light btn-sm">
+              <i class="fas fa-tags"></i> Group by Category
+            </button>
+            <button id="toggleHiddenBtn" class="btn btn-light btn-sm">
+              <i class="fas fa-eye"></i> <span id="toggleHiddenText">Show Hidden</span>
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="card-body">
         <div class="table-container">
           <table>
@@ -246,6 +296,25 @@
           this.showPicker();
         });
       });
+
+      // Modal functionality
+      const modal = document.getElementById('addTransactionModal');
+      const openModalBtn = document.getElementById('openAddTransactionModal');
+      const closeModalBtn = modal.querySelector('.close-modal');
+
+      openModalBtn.addEventListener('click', function() {
+        modal.style.display = 'block';
+      });
+
+      closeModalBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+      });
+
+      window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
     });
   </script>
 
@@ -253,6 +322,7 @@
   <script type="module" src="js/firebase-config.js"></script>
   <script type="module" src="js/utils.js"></script>
   <script type="module" src="js/chart.js"></script>
+  <script type="module" src="js/categories.js"></script>
   <script type="module" src="js/transactions.js"></script>
   <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/app.js"></script>

@@ -3,6 +3,6 @@ services:
     image: nginx:alpine
     container_name: cashflow-app
     volumes:
-      - "C:/temp/cashapp/cashapp:/usr/share/nginx/html:ro"
+      - "D:/DevWork/Cashapp:/usr/share/nginx/html:ro"
     ports:
       - "3333:80"

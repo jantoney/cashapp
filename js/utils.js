@@ -1,3 +1,5 @@
+import { categories } from './categories.js';
+
 // Global variables
 let transactions = []; 
 let unsavedChanges = false;
@@ -22,9 +24,12 @@ function showToast(message) {
   }, 3000);
 }
 
-// Utility: Format a date to YYYY-MM-DD
+// Utility: Format a date to YYYY-MM-DD in local timezone
 function formatDate(date) {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // Utility: Format number as AUD currency
@@ -36,7 +41,7 @@ function formatCurrency(value) {
 function updateUnsavedBanner() {
   const banner = document.getElementById('unsavedBanner');
   if (banner) {
-    banner.style.display = unsavedChanges ? 'block' : 'none';
+    banner.style.display = unsavedChanges ? 'flex' : 'none';
     //console.log("Banner update called, unsaved changes:", unsavedChanges); // Add debug log
   } else {
     console.warn("Unsaved banner element not found");
@@ -63,6 +68,7 @@ function addTransaction(tx) {
     recurring: tx.recurring === true,
     period: tx.recurring ? (tx.period || null) : null,
     hidden: tx.hidden === true,
+    categoryId: tx.categoryId || null,
     // Only include endDate if it has a value
     ...(tx.endDate && tx.endDate.trim() !== '' ? { endDate: tx.endDate } : { endDate: null })
   };
@@ -84,6 +90,20 @@ function setDefaultGraphDates() {
   document.getElementById('graphEndDate').value = formatDate(endDate);
 }
 
+// Render a category badge
+function renderCategoryBadge(categoryId) {
+  if (!categoryId) return '';
+  
+  const category = categories.find(cat => cat.id === categoryId);
+  if (!category) return '';
+  
+  return `
+    <span class="category-badge" style="background-color: ${category.color}">
+      <i class="fas ${category.icon}"></i>${category.name}
+    </span>
+  `;
+}
+
 export { 
   transactions, 
   unsavedChanges, 
@@ -95,5 +115,6 @@ export {
   setDefaultGraphDates,
   clearTransactions,
   addTransaction,
-  setUnsavedChanges
+  setUnsavedChanges,
+  renderCategoryBadge
 };
